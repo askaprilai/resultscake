@@ -4,48 +4,65 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>The Results Cake — Build It</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
+  /* Ripple Leadership brand v1.0 — 60% white surface / 30% navy / 10% emerald */
   :root{
-    --cyan:#00CDF9; --teal:#00A7C7; --deep:#00758E;
-    --yellow:#FEF444; --amber:#FDBF69; --amber-d:#D98A2B;
-    --pink:#FBA1A6; --magenta:#FB6794; --rasp:#EE3D72;
-    --ink:#0d2b33; --grey:#8A8A85;
+    --navy:#042C53;      /* deep navy — structure, headings, host surface */
+    --blue:#185FA5;      /* signal blue — eyebrow on light, input borders */
+    --blue-l:#B5D4F4;    /* light blue — body text + accents on navy */
+    --emerald:#1D9E75;   /* bright emerald — primary CTA, success */
+    --emerald-d:#0F6E56; /* ripple emerald — the mark */
+    --emerald-l:#5DCAA5;
+    --gold:#FFC857;      /* recognition — join code, scores, alerts on navy */
+    --warn:#B26A00;
+    --ink:#2C2C2A;       /* stone 900 */
+    --grey:#444441;      /* stone 700 */
+    --stone:#FAFAF8;     /* page ground */
+    --line:#E7E4DA;      /* hairlines */
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;height:100%}
   body{
-    font-family:Arial,Helvetica,"Helvetica Neue",sans-serif;
-    color:var(--ink); background:#fff; overscroll-behavior:none;
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--stone); overscroll-behavior:none;
   }
   .hide{display:none !important}
   button{font-family:inherit;cursor:pointer;border:0}
   .btn{
-    background:var(--deep);color:#fff;border-radius:999px;padding:14px 26px;
+    background:var(--navy);color:#fff;border-radius:999px;padding:14px 26px;
     font-size:17px;font-weight:700;letter-spacing:.02em;
   }
   .btn:active{transform:translateY(1px)}
-  .btn.ghost{background:transparent;color:var(--deep);border:2px solid var(--deep)}
-  .btn.cyan{background:var(--cyan);color:#00323d}
-  .btn.rasp{background:var(--rasp);color:#fff}
+  .btn.ghost{background:transparent;color:var(--navy);border:2px solid var(--navy)}
+  .btn.go{background:var(--emerald);color:#fff}
+  .btn.gold{background:var(--gold);color:var(--navy)}
   .btn.sm{padding:9px 16px;font-size:14px}
   .btn[disabled]{opacity:.4;pointer-events:none}
-  .eyebrow{color:var(--teal);text-transform:uppercase;letter-spacing:.16em;font-size:12px;font-weight:700;margin:0 0 8px}
-  h1{color:var(--deep);font-size:30px;line-height:1.1;margin:0 0 10px;letter-spacing:-.01em}
-  h2{color:var(--deep);font-size:20px;margin:0 0 8px}
-  .muted{color:#5d7a82;font-size:14px;line-height:1.5}
+  .eyebrow{color:var(--blue);text-transform:uppercase;letter-spacing:.16em;font-size:12px;font-weight:700;margin:0 0 8px}
+  h1{color:var(--navy);font-size:30px;line-height:1.1;margin:0 0 10px;letter-spacing:-.01em}
+  h2{color:var(--navy);font-size:20px;margin:0 0 8px}
+  .muted{color:#444441;font-size:14px;line-height:1.5}
 
   /* ---------- HOME ---------- */
   #home{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;
-    background:linear-gradient(160deg,#00758E 0%,#00A7C7 60%,#00CDF9 100%)}
+    background:linear-gradient(160deg,#042C53 0%,#0F4C81 55%,#185FA5 100%)}
   .card{background:#fff;border-radius:22px;padding:32px 28px;max-width:440px;width:100%;
-    box-shadow:0 24px 60px rgba(0,40,50,.28)}
+    box-shadow:0 24px 60px rgba(4,44,83,.28)}
   .code-in{width:100%;font-size:34px;letter-spacing:.3em;text-align:center;text-transform:uppercase;
-    padding:14px;border:3px solid var(--teal);border-radius:14px;font-weight:800;color:var(--deep);
+    padding:14px;border:3px solid var(--blue);border-radius:14px;font-weight:800;color:var(--navy);
     font-family:inherit;margin:6px 0 14px}
   .row{display:flex;gap:10px;flex-wrap:wrap}
-  .stack-hr{height:1px;background:#dfeaee;margin:22px 0}
+  .stack-hr{height:1px;background:var(--line);margin:22px 0}
+  /* ---------- BRAND MARK ---------- */
+  .brandrow{display:flex;align-items:center;gap:9px;margin:0 0 18px}
+  .brandrow .mark{flex:none;display:block}
+  .brandrow .wm{font-size:14px;font-weight:600;letter-spacing:-.01em}
+  .brandrow.on-light{color:var(--emerald-d)}
+  .brandrow.on-dark{color:#fff;opacity:.92}
 
   /* ---------- CAKE WIDGET ---------- */
   .pan{position:relative;margin:0 auto;width:100%;max-width:420px;touch-action:none;user-select:none}
@@ -53,14 +70,14 @@
     position:absolute;left:0;right:0;top:0;border-radius:12px;
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     padding:0 14px 0 16px;color:#fff;font-weight:800;font-size:18px;letter-spacing:.01em;
-    box-shadow:0 3px 0 rgba(0,0,0,.14), 0 6px 14px rgba(0,40,50,.14);
+    box-shadow:0 3px 0 rgba(0,0,0,.14), 0 6px 14px rgba(4,44,83,.14);
     transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .15s;
     will-change:transform;
   }
   .layer .grip{opacity:.75;font-size:20px;letter-spacing:-2px}
   .layer .nm{flex:1}
-  .layer.dark{color:#00323d}
-  .layer.dragging{transition:none;box-shadow:0 10px 26px rgba(0,40,50,.4);z-index:20;transform-origin:center}
+  .layer.dark{color:#042C53}
+  .layer.dragging{transition:none;box-shadow:0 10px 26px rgba(4,44,83,.4);z-index:20;transform-origin:center}
   .layer.locked{opacity:.96}
   .basetag{
     position:absolute;left:0;right:0;text-align:center;font-size:11px;font-weight:800;
@@ -71,56 +88,60 @@
   /* ---------- PLAYER ---------- */
   #play{padding:16px 16px 130px;max-width:520px;margin:0 auto}
   .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-  .pill{background:#e8f6fa;color:var(--deep);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-  .clock{font-size:32px;font-weight:900;color:var(--deep);font-variant-numeric:tabular-nums}
-  .clock.warn{color:var(--rasp)}
-  .footbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #dfeaee;
+  .pill{background:#E1F5EE;color:var(--navy);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .clock{font-size:32px;font-weight:900;color:var(--navy);font-variant-numeric:tabular-nums}
+  .clock.warn{color:var(--warn)}
+  .footbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #E7E4DA;
     padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;justify-content:center}
   .footbar .btn{flex:1;max-width:420px}
-  .scorebig{font-size:56px;font-weight:900;color:var(--deep);line-height:1}
+  .scorebig{font-size:56px;font-weight:900;color:var(--navy);line-height:1}
 
   /* ---------- HOST ---------- */
-  #host{min-height:100%;background:var(--deep);color:#fff;padding:22px 26px 26px}
+  #host{min-height:100%;background:var(--navy);color:#fff;padding:22px 26px 26px}
   #host h1{color:#fff;font-size:38px}
-  #host .eyebrow{color:var(--cyan)}
+  #host .eyebrow{color:var(--blue-l)}
   .hostgrid{display:grid;grid-template-columns:340px 1fr;gap:26px;align-items:start}
   .panel{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:18px}
-  .joincode{font-size:58px;font-weight:900;letter-spacing:.14em;color:var(--yellow);line-height:1;margin:6px 0 4px}
-  .joinurl{font-size:14px;color:#bfeaf6;word-break:break-all}
+  .joincode{font-size:58px;font-weight:900;letter-spacing:.14em;color:var(--gold);line-height:1;margin:6px 0 4px}
+  .joinurl{font-size:14px;color:#B5D4F4;word-break:break-all}
   #qr{background:#fff;padding:10px;border-radius:12px;display:inline-block;margin-top:12px}
   #qr img,#qr canvas{display:block}
   .bigclock{font-size:84px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
-  .bigclock.warn{color:var(--yellow)}
+  .bigclock.warn{color:var(--gold)}
   /* join counter + compact team grid (fits 55+ teams) */
   .joinstat{display:flex;align-items:baseline;gap:12px;margin:2px 0 14px}
-  .bignum{font-size:72px;font-weight:900;line-height:1;color:var(--yellow);font-variant-numeric:tabular-nums}
-  .ofnum{font-size:20px;font-weight:800;color:#bfeaf6}
+  .bignum{font-size:72px;font-weight:900;line-height:1;color:var(--gold);font-variant-numeric:tabular-nums}
+  .ofnum{font-size:20px;font-weight:800;color:#B5D4F4}
   .tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:6px 8px;margin-top:6px}
   .tchip{background:rgba(255,255,255,.10);border-radius:8px;padding:6px 10px;font-weight:700;font-size:15px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .tchip.locked{background:var(--yellow);color:#00323d}
+  .tchip.locked{background:var(--gold);color:#042C53}
   .board{width:100%;border-collapse:collapse;font-size:22px;font-weight:700}
   .board td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.15)}
-  .board .rk{width:50px;font-weight:900;color:var(--cyan);font-size:24px}
-  .board .cr{width:70px;color:#bfeaf6;font-size:18px;font-weight:700}
-  .board .sc{text-align:right;font-weight:900;color:var(--yellow);font-size:26px;width:70px}
-  .board tr.perfect .sc{color:#fff;background:var(--rasp);border-radius:8px}
-  .mt{font-weight:800;font-size:14px;margin-bottom:8px;color:#bfeaf6;text-transform:uppercase;letter-spacing:.12em}
+  .board .rk{width:50px;font-weight:900;color:var(--blue-l);font-size:24px}
+  .board .cr{width:70px;color:#B5D4F4;font-size:18px;font-weight:700}
+  .board .sc{text-align:right;font-weight:900;color:var(--gold);font-size:26px;width:70px}
+  .board tr.perfect .sc{color:#fff;background:var(--emerald);border-radius:8px}
+  .mt{font-weight:800;font-size:14px;margin-bottom:8px;color:#B5D4F4;text-transform:uppercase;letter-spacing:.12em}
   .revealgrid{display:grid;grid-template-columns:1.05fr .85fr 290px;gap:30px;align-items:start}
   @media (max-width:1200px){ .revealgrid{grid-template-columns:1fr} }
   /* score distribution */
   .distrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-  .distlab{width:52px;font-weight:900;font-size:21px;color:var(--cyan);flex:none}
+  .distlab{width:52px;font-weight:900;font-size:21px;color:var(--blue-l);flex:none}
   .disttrack{display:block;flex:1;background:rgba(255,255,255,.10);border-radius:7px;height:30px;overflow:hidden}
-  .distbar{display:block;height:100%;width:0;background:var(--cyan);border-radius:7px;transition:width .6s ease}
-  .distrow.top .distbar{background:var(--rasp)}
-  .distrow.top .distlab{color:var(--rasp)}
+  .distbar{display:block;height:100%;width:0;background:var(--blue-l);border-radius:7px;transition:width .6s ease}
+  .distrow.top .distbar{background:var(--emerald)}
+  .distrow.top .distlab{color:var(--emerald-l)}
   .distcount{width:104px;flex:none;font-weight:800;font-size:19px;color:#fff}
-  .distnote{font-size:17px;color:#bfeaf6;margin-top:16px;line-height:1.45;font-weight:700}
-  .statusline{font-size:13px;color:#bfeaf6;margin-top:10px}
-  .warnbar{background:var(--yellow);color:#00323d;font-weight:800;padding:10px 16px;font-size:14px;text-align:center}
+  .distnote{font-size:17px;color:#B5D4F4;margin-top:16px;line-height:1.45;font-weight:700}
+  .statusline{font-size:13px;color:#B5D4F4;margin-top:10px}
+  .warnbar{background:var(--gold);color:#042C53;font-weight:800;padding:10px 16px;font-size:14px;text-align:center}
   .hostbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
   .keyedit{margin-top:14px}
+  /* the cake sits on navy here: give every layer a light rim so the navy
+     LEADERSHIP layer separates from the panel, and lift the base label */
+  #host .layer{box-shadow:0 3px 0 rgba(0,0,0,.22), 0 6px 14px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.18)}
+  #host .basetag{color:var(--blue-l)}
   @media (max-width:900px){ .hostgrid{grid-template-columns:1fr} #host{padding:16px} #host h1{font-size:28px} .bigclock{font-size:60px} }
 </style>
 </head>
@@ -129,6 +150,7 @@
 <!-- ================= HOME ================= -->
 <div id="home">
   <div class="card">
+    <div class="brandrow on-light"><svg class="mark" viewBox="-30 -30 60 60" width="30" height="30" role="img" aria-label="Ripple Leadership"><path d="M -22 0 A 22 22 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -14 0 A 14 14 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -7 0 A 7 7 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="0" cy="0" r="2.2" fill="currentColor"/></svg><span class="wm">Ripple Leadership</span></div>
     <p class="eyebrow">Positive Leaders Cultivate Positive Results</p>
     <h1>The Results Cake</h1>
     <p class="muted">Build the cake. Six layers, one right order. Leadership is somewhere in there — your team has to decide where.</p>
@@ -145,7 +167,7 @@
 </div>
 
 <!-- ================= NAME GATE ================= -->
-<div id="gate" class="hide" style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(160deg,#00758E 0%,#00A7C7 60%,#00CDF9 100%)">
+<div id="gate" class="hide" style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(160deg,#042C53 0%,#0F4C81 55%,#185FA5 100%)">
   <div class="card">
     <p class="eyebrow">The Results Cake</p>
     <h1>Name your team</h1>
@@ -190,9 +212,9 @@
         <p class="eyebrow">Time</p>
         <div class="bigclock" id="hClock">1:30</div>
         <div class="hostbtns">
-          <button class="btn cyan sm" id="hStart">Start round</button>
+          <button class="btn go sm" id="hStart">Start round</button>
           <button class="btn ghost sm" style="color:#fff;border-color:#fff" id="hStop">Stop clock</button>
-          <button class="btn rasp sm" id="hReveal">Reveal answer</button>
+          <button class="btn gold sm" id="hReveal">Reveal answer</button>
           <button class="btn ghost sm" style="color:#fff;border-color:#fff" id="hReset">New round</button>
         </div>
         <div class="statusline" id="hStatus">Waiting for teams…</div>
@@ -207,7 +229,7 @@
     </div>
 
     <div>
-      <p class="eyebrow">Michael Kors · Store Manager Summit</p>
+      <div class="brandrow on-dark"><svg class="mark" viewBox="-30 -30 60 60" width="26" height="26" role="img" aria-label="Ripple Leadership"><path d="M -22 0 A 22 22 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -14 0 A 14 14 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -7 0 A 7 7 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="0" cy="0" r="2.2" fill="currentColor"/></svg><span class="wm">Ripple Leadership · Leadership summit</span></div>
       <h1 id="hTitle">Build the Results Cake</h1>
       <div class="panel" id="hLobbyPanel">
         <p class="eyebrow">Teams in the room</p>
@@ -254,12 +276,12 @@ const SB_KEY = "sb_publishable_AMV2hMhx15VFFeTU5tYJ_A_sPOVwwFO";
 
 /* ---- the six layers (default correct order, TOP -> BOTTOM) ---- */
 const LAYERS = {
-  results:    {id:"results",    name:"RESULTS",    color:"#FEF444", dark:true},
-  execution:  {id:"execution",  name:"EXECUTION",  color:"#FDBF69", dark:true},
-  strategy:   {id:"strategy",   name:"STRATEGY",   color:"#FB6794"},
-  people:     {id:"people",     name:"PEOPLE",     color:"#EE3D72"},
-  culture:    {id:"culture",    name:"CULTURE",    color:"#00CDF9", dark:true},
-  leadership: {id:"leadership", name:"LEADERSHIP", color:"#00758E"}
+  results:    {id:"results",    name:"RESULTS",    color:"#FFC857", dark:true},
+  execution:  {id:"execution",  name:"EXECUTION",  color:"#9FE1CB", dark:true},
+  strategy:   {id:"strategy",   name:"STRATEGY",   color:"#1D9E75"},
+  people:     {id:"people",     name:"PEOPLE",     color:"#085041"},
+  culture:    {id:"culture",    name:"CULTURE",    color:"#185FA5"},
+  leadership: {id:"leadership", name:"LEADERSHIP", color:"#042C53"}
 };
 const DEFAULT_KEY = ["results","execution","strategy","people","culture","leadership"];
 let ANSWER_KEY = (localStorage.getItem("cakeKey") || "").split(",").filter(k=>LAYERS[k]);
@@ -486,8 +508,8 @@ function runPlayer(room, tableName){
     if (v){
       cake.enable(false);
       b.textContent = "Locked in ✓ — tap to unlock";
-      b.style.background = "var(--yellow)";
-      b.style.color = "#00323d";
+      b.style.background = "var(--gold)";
+      b.style.color = "#042C53";
       $("#pPan").style.opacity = ".62";
       $("#pTable").textContent = tableName + " · locked";
       $("#pEyebrow").textContent = "Locked in ✓";
