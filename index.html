@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>The Results Cake — Build It</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --cyan:#00CDF9; --teal:#00A7C7; --deep:#00758E;
+    --yellow:#FEF444; --amber:#FDBF69; --amber-d:#D98A2B;
+    --pink:#FBA1A6; --magenta:#FB6794; --rasp:#EE3D72;
+    --ink:#0d2b33; --grey:#8A8A85;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    font-family:Arial,Helvetica,"Helvetica Neue",sans-serif;
+    color:var(--ink); background:#fff; overscroll-behavior:none;
+  }
+  .hide{display:none !important}
+  button{font-family:inherit;cursor:pointer;border:0}
+  .btn{
+    background:var(--deep);color:#fff;border-radius:999px;padding:14px 26px;
+    font-size:17px;font-weight:700;letter-spacing:.02em;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;color:var(--deep);border:2px solid var(--deep)}
+  .btn.cyan{background:var(--cyan);color:#00323d}
+  .btn.rasp{background:var(--rasp);color:#fff}
+  .btn.sm{padding:9px 16px;font-size:14px}
+  .btn[disabled]{opacity:.4;pointer-events:none}
+  .eyebrow{color:var(--teal);text-transform:uppercase;letter-spacing:.16em;font-size:12px;font-weight:700;margin:0 0 8px}
+  h1{color:var(--deep);font-size:30px;line-height:1.1;margin:0 0 10px;letter-spacing:-.01em}
+  h2{color:var(--deep);font-size:20px;margin:0 0 8px}
+  .muted{color:#5d7a82;font-size:14px;line-height:1.5}
+
+  /* ---------- HOME ---------- */
+  #home{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:linear-gradient(160deg,#00758E 0%,#00A7C7 60%,#00CDF9 100%)}
+  .card{background:#fff;border-radius:22px;padding:32px 28px;max-width:440px;width:100%;
+    box-shadow:0 24px 60px rgba(0,40,50,.28)}
+  .code-in{width:100%;font-size:34px;letter-spacing:.3em;text-align:center;text-transform:uppercase;
+    padding:14px;border:3px solid var(--teal);border-radius:14px;font-weight:800;color:var(--deep);
+    font-family:inherit;margin:6px 0 14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .stack-hr{height:1px;background:#dfeaee;margin:22px 0}
+
+  /* ---------- CAKE WIDGET ---------- */
+  .pan{position:relative;margin:0 auto;width:100%;max-width:420px;touch-action:none;user-select:none}
+  .layer{
+    position:absolute;left:0;right:0;top:0;border-radius:12px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:0 14px 0 16px;color:#fff;font-weight:800;font-size:18px;letter-spacing:.01em;
+    box-shadow:0 3px 0 rgba(0,0,0,.14), 0 6px 14px rgba(0,40,50,.14);
+    transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .15s;
+    will-change:transform;
+  }
+  .layer .grip{opacity:.75;font-size:20px;letter-spacing:-2px}
+  .layer .nm{flex:1}
+  .layer.dark{color:#00323d}
+  .layer.dragging{transition:none;box-shadow:0 10px 26px rgba(0,40,50,.4);z-index:20;transform-origin:center}
+  .layer.locked{opacity:.96}
+  .basetag{
+    position:absolute;left:0;right:0;text-align:center;font-size:11px;font-weight:800;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--grey);
+  }
+  .layer .mark{font-size:20px;font-weight:900}
+
+  /* ---------- PLAYER ---------- */
+  #play{padding:16px 16px 130px;max-width:520px;margin:0 auto}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .pill{background:#e8f6fa;color:var(--deep);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .clock{font-size:32px;font-weight:900;color:var(--deep);font-variant-numeric:tabular-nums}
+  .clock.warn{color:var(--rasp)}
+  .footbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #dfeaee;
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;justify-content:center}
+  .footbar .btn{flex:1;max-width:420px}
+  .scorebig{font-size:56px;font-weight:900;color:var(--deep);line-height:1}
+
+  /* ---------- HOST ---------- */
+  #host{min-height:100%;background:var(--deep);color:#fff;padding:22px 26px 26px}
+  #host h1{color:#fff;font-size:38px}
+  #host .eyebrow{color:var(--cyan)}
+  .hostgrid{display:grid;grid-template-columns:340px 1fr;gap:26px;align-items:start}
+  .panel{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:18px}
+  .joincode{font-size:58px;font-weight:900;letter-spacing:.14em;color:var(--yellow);line-height:1;margin:6px 0 4px}
+  .joinurl{font-size:14px;color:#bfeaf6;word-break:break-all}
+  #qr{background:#fff;padding:10px;border-radius:12px;display:inline-block;margin-top:12px}
+  #qr img,#qr canvas{display:block}
+  .bigclock{font-size:84px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+  .bigclock.warn{color:var(--yellow)}
+  /* join counter + compact team grid (fits 55+ teams) */
+  .joinstat{display:flex;align-items:baseline;gap:12px;margin:2px 0 14px}
+  .bignum{font-size:72px;font-weight:900;line-height:1;color:var(--yellow);font-variant-numeric:tabular-nums}
+  .ofnum{font-size:20px;font-weight:800;color:#bfeaf6}
+  .tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:6px 8px;margin-top:6px}
+  .tchip{background:rgba(255,255,255,.10);border-radius:8px;padding:6px 10px;font-weight:700;font-size:15px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tchip.locked{background:var(--yellow);color:#00323d}
+  .board{width:100%;border-collapse:collapse;font-size:22px;font-weight:700}
+  .board td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.15)}
+  .board .rk{width:50px;font-weight:900;color:var(--cyan);font-size:24px}
+  .board .cr{width:70px;color:#bfeaf6;font-size:18px;font-weight:700}
+  .board .sc{text-align:right;font-weight:900;color:var(--yellow);font-size:26px;width:70px}
+  .board tr.perfect .sc{color:#fff;background:var(--rasp);border-radius:8px}
+  .mt{font-weight:800;font-size:14px;margin-bottom:8px;color:#bfeaf6;text-transform:uppercase;letter-spacing:.12em}
+  .revealgrid{display:grid;grid-template-columns:1.05fr .85fr 290px;gap:30px;align-items:start}
+  @media (max-width:1200px){ .revealgrid{grid-template-columns:1fr} }
+  /* score distribution */
+  .distrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .distlab{width:52px;font-weight:900;font-size:21px;color:var(--cyan);flex:none}
+  .disttrack{display:block;flex:1;background:rgba(255,255,255,.10);border-radius:7px;height:30px;overflow:hidden}
+  .distbar{display:block;height:100%;width:0;background:var(--cyan);border-radius:7px;transition:width .6s ease}
+  .distrow.top .distbar{background:var(--rasp)}
+  .distrow.top .distlab{color:var(--rasp)}
+  .distcount{width:104px;flex:none;font-weight:800;font-size:19px;color:#fff}
+  .distnote{font-size:17px;color:#bfeaf6;margin-top:16px;line-height:1.45;font-weight:700}
+  .statusline{font-size:13px;color:#bfeaf6;margin-top:10px}
+  .warnbar{background:var(--yellow);color:#00323d;font-weight:800;padding:10px 16px;font-size:14px;text-align:center}
+  .hostbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .keyedit{margin-top:14px}
+  @media (max-width:900px){ .hostgrid{grid-template-columns:1fr} #host{padding:16px} #host h1{font-size:28px} .bigclock{font-size:60px} }
+</style>
+</head>
+<body>
+
+<!-- ================= HOME ================= -->
+<div id="home">
+  <div class="card">
+    <p class="eyebrow">Positive Leaders Cultivate Positive Results</p>
+    <h1>The Results Cake</h1>
+    <p class="muted">Build the cake. Six layers, one right order. Leadership is somewhere in there — your team has to decide where.</p>
+    <div class="stack-hr"></div>
+    <h2>Joining a team?</h2>
+    <input class="code-in" id="joinCode" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters">
+    <button class="btn" id="joinBtn" style="width:100%">Join the game</button>
+    <div class="stack-hr"></div>
+    <div class="row">
+      <button class="btn ghost sm" id="hostBtn">Facilitator screen</button>
+      <button class="btn ghost sm" id="soloBtn">Solo / no-wifi mode</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= NAME GATE ================= -->
+<div id="gate" class="hide" style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(160deg,#00758E 0%,#00A7C7 60%,#00CDF9 100%)">
+  <div class="card">
+    <p class="eyebrow">The Results Cake</p>
+    <h1>Name your team</h1>
+    <p class="muted">This is what shows on the big screen. Store name, crew name, whatever you want to be called.</p>
+    <input class="code-in" id="gateName" maxlength="22" placeholder="Your team name" style="letter-spacing:.02em;font-size:22px;text-transform:none" autocomplete="off">
+    <button class="btn" id="gateGo" style="width:100%">We're in</button>
+  </div>
+</div>
+
+<!-- ================= PLAYER ================= -->
+<div id="play" class="hide">
+  <div class="topbar">
+    <span class="pill" id="pTable">Team</span>
+    <span class="clock" id="pClock">—</span>
+  </div>
+  <p class="eyebrow" id="pEyebrow">Drag the layers into order</p>
+  <h1 id="pTitle">Build your Results Cake</h1>
+  <p class="muted" id="pHelp">Top of the screen is the top of the cake. Drag a layer to move it. Bottom is the foundation.</p>
+  <div id="pPan" class="pan" style="margin-top:18px"></div>
+  <div id="pResult" class="hide" style="margin-top:22px;text-align:center">
+    <p class="eyebrow">Your team scored</p>
+    <div class="scorebig" id="pScore">0</div>
+    <p class="muted" id="pScoreNote"></p>
+  </div>
+  <div class="footbar">
+    <button class="btn" id="pSubmit">Lock it in</button>
+  </div>
+</div>
+
+<!-- ================= HOST ================= -->
+<div id="host" class="hide">
+  <div id="hostWarn" class="warnbar hide"></div>
+  <div class="hostgrid">
+    <div>
+      <div class="panel">
+        <p class="eyebrow">Teams join at</p>
+        <div class="joinurl" id="hUrl"></div>
+        <div class="joincode" id="hCode">----</div>
+        <div id="qr"></div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <p class="eyebrow">Time</p>
+        <div class="bigclock" id="hClock">1:30</div>
+        <div class="hostbtns">
+          <button class="btn cyan sm" id="hStart">Start round</button>
+          <button class="btn ghost sm" style="color:#fff;border-color:#fff" id="hStop">Stop clock</button>
+          <button class="btn rasp sm" id="hReveal">Reveal answer</button>
+          <button class="btn ghost sm" style="color:#fff;border-color:#fff" id="hReset">New round</button>
+        </div>
+        <div class="statusline" id="hStatus">Waiting for teams…</div>
+        <div class="keyedit">
+          <button class="btn ghost sm" style="color:#fff;border-color:rgba(255,255,255,.5)" id="hKeyToggle">Edit the answer key</button>
+          <div id="hKeyWrap" class="hide" style="margin-top:12px">
+            <p class="statusline">Drag to set the correct cake (top → bottom).</p>
+            <div id="hKeyPan" class="pan"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="eyebrow">Michael Kors · Store Manager Summit</p>
+      <h1 id="hTitle">Build the Results Cake</h1>
+      <div class="panel" id="hLobbyPanel">
+        <p class="eyebrow">Teams in the room</p>
+        <div class="joinstat">
+          <span class="bignum" id="hCount">0</span>
+          <span class="ofnum">teams in · <span id="hLocked">0</span> locked in</span>
+        </div>
+        <div class="tables" id="hTables"><span class="statusline">No teams yet — scan the code.</span></div>
+      </div>
+      <div class="panel hide" id="hRevealPanel" style="margin-top:16px">
+        <p class="eyebrow">The answer — leadership is the base</p>
+        <div class="revealgrid">
+          <div>
+            <div class="mt">Top 10 teams</div>
+            <table class="board"><tbody id="hBoard"></tbody></table>
+            <div class="distnote" id="hBoardNote"></div>
+          </div>
+          <div>
+            <div class="mt">How the room did</div>
+            <div id="hDist"></div>
+            <div class="distnote" id="hDistNote"></div>
+          </div>
+          <div>
+            <div class="mt">The Results Cake</div>
+            <div id="hKeyShow" class="pan"></div>
+            <div class="mt" style="margin-top:18px">What the room built</div>
+            <div id="hRoomCake" class="pan"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   THE RESULTS CAKE — live build game
+   Views: home | player (?r=CODE) | host (#host) | solo (#solo)
+   Sync: Supabase Realtime broadcast (no database writes)
+   ========================================================= */
+
+const SB_URL = "https://qxmcpnyyxkgerfuwhsuy.supabase.co";
+const SB_KEY = "sb_publishable_AMV2hMhx15VFFeTU5tYJ_A_sPOVwwFO";
+
+/* ---- the six layers (default correct order, TOP -> BOTTOM) ---- */
+const LAYERS = {
+  results:    {id:"results",    name:"RESULTS",    color:"#FEF444", dark:true},
+  execution:  {id:"execution",  name:"EXECUTION",  color:"#FDBF69", dark:true},
+  strategy:   {id:"strategy",   name:"STRATEGY",   color:"#FB6794"},
+  people:     {id:"people",     name:"PEOPLE",     color:"#EE3D72"},
+  culture:    {id:"culture",    name:"CULTURE",    color:"#00CDF9", dark:true},
+  leadership: {id:"leadership", name:"LEADERSHIP", color:"#00758E"}
+};
+const DEFAULT_KEY = ["results","execution","strategy","people","culture","leadership"];
+let ANSWER_KEY = (localStorage.getItem("cakeKey") || "").split(",").filter(k=>LAYERS[k]);
+if (ANSWER_KEY.length !== 6) ANSWER_KEY = DEFAULT_KEY.slice();
+
+const ROUND_SECONDS = 90;
+const LAYER_H = 60, GAP = 8;
+
+const $ = s => document.querySelector(s);
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const fmt = s => Math.floor(s/60)+":"+String(Math.max(0,s%60)).padStart(2,"0");
+
+/* =========================================================
+   Cake widget — pointer-based drag sorting (touch + mouse)
+   ========================================================= */
+function Cake(el, opts){
+  opts = opts || {};
+  const H = opts.h || LAYER_H, G = opts.gap==null ? GAP : opts.gap;
+  let order = opts.order ? opts.order.slice() : shuffle(DEFAULT_KEY);
+  let enabled = !!opts.editable;
+  const nodes = {};
+
+  el.style.height = (order.length*(H+G) - G + 22) + "px";
+  const tag = document.createElement("div");
+  tag.className = "basetag";
+  tag.textContent = opts.baseLabel || "the foundation";
+  tag.style.top = (order.length*(H+G) - G + 6) + "px";
+  el.appendChild(tag);
+
+  order.forEach(id => {
+    const L = LAYERS[id];
+    const d = document.createElement("div");
+    d.className = "layer" + (L.dark ? " dark" : "");
+    d.style.background = L.color;
+    d.style.height = H+"px";
+    d.style.fontSize = (opts.fs || 18)+"px";
+    d.innerHTML = '<span class="grip">≡</span><span class="nm"></span><span class="mark"></span>';
+    d.querySelector(".nm").textContent = L.name;
+    d.dataset.id = id;
+    nodes[id] = d;
+    el.appendChild(d);
+    if (!opts.editable) d.querySelector(".grip").style.display = "none";
+    attachDrag(d, id);
+  });
+
+  function place(anim){
+    order.forEach((id,i)=>{
+      const n = nodes[id];
+      if (!anim) n.style.transition = "none";
+      n.style.transform = "translateY("+ (i*(H+G)) +"px)";
+      if (!anim) requestAnimationFrame(()=>{ n.style.transition = ""; });
+    });
+  }
+  place(false);
+
+  function attachDrag(node, id){
+    let dragging=false, startY=0, startIdx=0, cur=0;
+    node.addEventListener("pointerdown", e=>{
+      if (!enabled) return;
+      dragging = true; startY = e.clientY;
+      startIdx = order.indexOf(id); cur = startIdx;
+      node.classList.add("dragging");
+      node.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    node.addEventListener("pointermove", e=>{
+      if (!dragging) return;
+      const dy = e.clientY - startY;
+      const raw = startIdx*(H+G) + dy;
+      node.style.transform = "translateY("+raw+"px) scale(1.03)";
+      let ni = Math.round(raw/(H+G));
+      ni = Math.max(0, Math.min(order.length-1, ni));
+      if (ni !== cur){
+        order.splice(order.indexOf(id),1);
+        order.splice(ni,0,id);
+        cur = ni;
+        order.forEach((oid,i)=>{ if(oid!==id) nodes[oid].style.transform = "translateY("+(i*(H+G))+"px)"; });
+      }
+      e.preventDefault();
+    });
+    const end = e => {
+      if (!dragging) return;
+      dragging = false;
+      node.classList.remove("dragging");
+      place(true);
+      if (opts.onChange) opts.onChange(order.slice());
+    };
+    node.addEventListener("pointerup", end);
+    node.addEventListener("pointercancel", end);
+  }
+
+  return {
+    get order(){ return order.slice(); },
+    set(newOrder, anim){ order = newOrder.slice(); place(anim!==false); },
+    enable(v){ enabled = v; el.style.opacity = v ? 1 : .97;
+      Object.values(nodes).forEach(n=>{ n.querySelector(".grip").style.display = v ? "" : "none"; }); },
+    mark(key){
+      order.forEach((id,i)=>{
+        const m = nodes[id].querySelector(".mark");
+        m.textContent = key ? (key[i]===id ? "✓" : "✗") : "";
+        m.style.opacity = key ? (key[i]===id ? 1 : .55) : 0;
+      });
+    },
+    shuffle(){ order = shuffle(order); place(true); }
+  };
+}
+
+function scoreOf(order, key){
+  let correct = 0;
+  order.forEach((id,i)=>{ if(key[i]===id) correct++; });
+  return correct;
+}
+function points(correct, secsLeft){
+  let p = correct*10;
+  if (correct === 6) p += Math.round(Math.max(0,secsLeft)/3); // speed bonus only on a perfect cake
+  return p;
+}
+
+/* =========================================================
+   Realtime
+   ========================================================= */
+let sb = null, chan = null, online = false;
+function connect(room, onMsg, onReady){
+  try {
+    sb = supabase.createClient(SB_URL, SB_KEY, {realtime:{params:{eventsPerSecond:20}}});
+    chan = sb.channel("cake-"+room, {config:{broadcast:{self:false}}});
+    chan.on("broadcast", {event:"msg"}, p => onMsg(p.payload));
+    chan.subscribe(status => {
+      if (status === "SUBSCRIBED"){ online = true; onReady && onReady(true); }
+      else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED"){ online = false; onReady && onReady(false); }
+    });
+  } catch(err){ online = false; onReady && onReady(false); }
+}
+function send(payload){ if (chan && online) chan.send({type:"broadcast", event:"msg", payload}); }
+
+/* =========================================================
+   Routing
+   ========================================================= */
+const params = new URLSearchParams(location.search);
+const roomParam = (params.get("r")||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+const hash = location.hash;
+
+$("#joinBtn").onclick = () => {
+  const c = $("#joinCode").value.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  if (c.length < 3) { $("#joinCode").focus(); return; }
+  location.search = "?r="+c;
+};
+$("#joinCode").addEventListener("keydown", e => { if (e.key==="Enter") $("#joinBtn").click(); });
+$("#hostBtn").onclick = () => { location.hash = "#host"; location.reload(); };
+$("#soloBtn").onclick = () => { location.hash = "#solo"; location.reload(); };
+
+if (roomParam) startPlayer(roomParam);
+else if (hash === "#host") startHost();
+else if (hash === "#solo") startSolo();
+
+/* =========================================================
+   PLAYER
+   ========================================================= */
+function startPlayer(room){
+  $("#home").classList.add("hide");
+  const saved = localStorage.getItem("cakeTeam_"+room) || "";
+  if (!saved){
+    $("#gate").classList.remove("hide");
+    const go = () => {
+      const v = ($("#gateName").value || "").trim().slice(0,22) || ("Team " + Math.floor(Math.random()*90+10));
+      localStorage.setItem("cakeTeam_"+room, v);
+      $("#gate").classList.add("hide");
+      runPlayer(room, v);
+    };
+    $("#gateGo").onclick = go;
+    $("#gateName").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    setTimeout(()=>$("#gateName").focus(), 150);
+    return;
+  }
+  runPlayer(room, saved);
+}
+
+function runPlayer(room, tableName){
+  $("#play").classList.remove("hide");
+  $("#pTable").textContent = tableName;
+
+  let phase = "lobby", secs = ROUND_SECONDS, submitted = false, key = ANSWER_KEY.slice(), curRound = -1;
+
+  const cake = Cake($("#pPan"), {editable:false, onChange:()=>{}});
+  cake.enable(false);
+
+  function setPhase(p){
+    phase = p;
+    if (p === "lobby"){
+      $("#pEyebrow").textContent = "Waiting for the facilitator";
+      $("#pTitle").textContent = "Get ready";
+      $("#pHelp").textContent = "You'll have 90 seconds to stack the six layers in the right order. Leadership goes somewhere — your team decides where.";
+      $("#pSubmit").textContent = "Waiting…"; $("#pSubmit").disabled = true;
+      cake.enable(false); cake.mark(null);
+      $("#pResult").classList.add("hide");
+    }
+    if (p === "playing"){
+      $("#pTitle").textContent = "Build your Results Cake";
+      $("#pSubmit").disabled = false;
+      cake.mark(null);
+      setLocked(submitted);
+      $("#pResult").classList.add("hide");
+    }
+    if (p === "reveal"){
+      $("#pEyebrow").textContent = "The answer";
+      $("#pTitle").textContent = "Leadership is the base";
+      $("#pHelp").textContent = "That's you. Everything above it sits on how you show up.";
+      $("#pTable").textContent = tableName;
+      $("#pSubmit").disabled = true; $("#pSubmit").textContent = "Round over";
+      $("#pSubmit").style.background = ""; $("#pSubmit").style.color = "";
+      cake.enable(false);
+      const c = scoreOf(cake.order, key);
+      cake.mark(key);
+      $("#pResult").classList.remove("hide");
+      $("#pScore").textContent = points(c, secs);
+      $("#pScoreNote").textContent = c + " of 6 layers in the right place" + (c===6 ? " — perfect cake." : ".");
+    }
+  }
+
+  /* one clear state: locked = cake frozen + yellow button. Tap again to unlock. */
+  function setLocked(v){
+    submitted = v;
+    const b = $("#pSubmit");
+    if (v){
+      cake.enable(false);
+      b.textContent = "Locked in ✓ — tap to unlock";
+      b.style.background = "var(--yellow)";
+      b.style.color = "#00323d";
+      $("#pPan").style.opacity = ".62";
+      $("#pTable").textContent = tableName + " · locked";
+      $("#pEyebrow").textContent = "Locked in ✓";
+      $("#pHelp").textContent = "Locked. The facilitator can see your build. Tap the button again if you want to change it.";
+    } else {
+      cake.enable(true);
+      $("#pPan").style.opacity = "1";
+      $("#pTable").textContent = tableName;
+      $("#pEyebrow").textContent = "Drag the layers into order";
+      b.textContent = "Lock it in";
+      b.style.background = "";
+      b.style.color = "";
+      $("#pHelp").textContent = "Top of the screen is the top of the cake. Drag a layer to move it.";
+    }
+  }
+  setPhase("lobby");
+
+  function onSubmit(){
+    if (phase !== "playing") return;
+    if (!submitted){
+      setLocked(true);
+      send({t:"submit", table:tableName, order:cake.order, secs:secs});
+    } else {
+      setLocked(false);
+      send({t:"unlock", table:tableName});
+    }
+  }
+  $("#pSubmit").onclick = onSubmit;
+
+  /* Connection can blip (phone sleeps, wifi hiccups). Don't dump anyone into
+     practice mode on the first error — wait, and come back cleanly if it returns. */
+  let offlineMode = false, offlineTimer = null;
+  function goOffline(){
+    offlineMode = true;
+    $("#pEyebrow").textContent = "Offline — practice build";
+    $("#pTitle").textContent = "Build your Results Cake";
+    $("#pHelp").textContent = "Can't reach the room — check the wifi. Keep building; this reconnects on its own.";
+    $("#pTable").textContent = tableName;
+    cake.enable(true); cake.mark(null);
+    $("#pPan").style.opacity = "1";
+    $("#pSubmit").disabled = false;
+    $("#pSubmit").textContent = "Show me the answer";
+    $("#pSubmit").style.background = ""; $("#pSubmit").style.color = "";
+    $("#pSubmit").onclick = () => { cake.mark(key); cake.enable(false); $("#pSubmit").disabled = true; };
+  }
+  function backOnline(){
+    if (offlineMode){
+      offlineMode = false;
+      cake.mark(null);
+      $("#pSubmit").onclick = onSubmit;
+      $("#pSubmit").disabled = false;
+      setPhase(phase);
+    }
+    send({t:"join", table:tableName});
+  }
+
+  setInterval(()=>{
+    if (phase === "playing"){
+      secs = Math.max(0, secs-1);
+      $("#pClock").textContent = fmt(secs);
+      $("#pClock").classList.toggle("warn", secs <= 15);
+      if (secs === 0 && !submitted){
+        send({t:"submit", table:tableName, order:cake.order, secs:0});
+        setLocked(true);
+        $("#pHelp").textContent = "Time's up — your build is locked.";
+      }
+    }
+  }, 1000);
+
+  connect(room, msg => {
+    if (msg.t === "phase"){
+      if (msg.key) key = msg.key;
+      if (typeof msg.secs === "number") { secs = msg.secs; $("#pClock").textContent = fmt(secs); }
+      if (typeof msg.round === "number" && msg.round !== curRound && msg.phase === "playing"){
+        curRound = msg.round; cake.shuffle(); setLocked(false);
+      }
+      if (msg.phase !== phase) setPhase(msg.phase);
+    }
+    if (msg.t === "ping") send({t:"join", table:tableName});
+  }, ok => {
+    if (ok){
+      clearTimeout(offlineTimer); offlineTimer = null;
+      backOnline();
+    } else if (!offlineTimer && !offlineMode){
+      offlineTimer = setTimeout(()=>{ offlineTimer = null; goOffline(); }, 10000);
+    }
+  });
+}
+
+/* =========================================================
+   HOST
+   ========================================================= */
+function startHost(){
+  $("#home").classList.add("hide");
+  $("#host").classList.remove("hide");
+
+  let room = sessionStorage.getItem("cakeRoom");
+  if (!room){
+    const A = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    room = Array.from({length:4}, ()=>A[Math.floor(Math.random()*A.length)]).join("");
+    sessionStorage.setItem("cakeRoom", room);
+  }
+  const joinUrl = location.origin + location.pathname + "?r=" + room;
+  $("#hCode").textContent = room;
+  $("#hUrl").textContent = joinUrl.replace(/^https?:\/\//,"");
+  try { new QRCode($("#qr"), {text:joinUrl, width:190, height:190, correctLevel:QRCode.CorrectLevel.M}); } catch(e){}
+
+  const tables = {};       // name -> {order, secs, locked}
+  let phase = "lobby", secs = ROUND_SECONDS, tick = null, roundId = 0;
+
+  const keyCake = Cake($("#hKeyPan"), {editable:true, order:ANSWER_KEY, h:44, fs:14,
+    onChange:o=>{ ANSWER_KEY = o; localStorage.setItem("cakeKey", o.join(",")); }});
+  keyCake.enable(true);
+  $("#hKeyToggle").onclick = () => $("#hKeyWrap").classList.toggle("hide");
+
+  function renderTables(){
+    const names = Object.keys(tables).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"}));
+    const box = $("#hTables");
+    const locked = names.filter(n=>tables[n].locked).length;
+    $("#hCount").textContent = names.length;
+    $("#hLocked").textContent = locked;
+    if (!names.length){
+      box.innerHTML = '<span class="statusline">No teams yet — scan the code.</span>';
+      $("#hStatus").textContent = "Waiting for teams…";
+      return;
+    }
+    box.innerHTML = "";
+    names.forEach(n=>{
+      const d = document.createElement("span");
+      d.className = "tchip" + (tables[n].locked ? " locked" : "");
+      d.textContent = n + (tables[n].locked ? " ✓" : "");
+      box.appendChild(d);
+    });
+    $("#hStatus").textContent = names.length + " team" + (names.length===1?"":"s") + " in · " + locked + " locked in";
+  }
+
+  function broadcastPhase(){ send({t:"phase", phase:phase, secs:secs, key:ANSWER_KEY, round:roundId}); }
+
+  $("#hStart").onclick = () => {
+    phase = "playing"; secs = ROUND_SECONDS; roundId++;
+    Object.keys(tables).forEach(n=>{ tables[n].locked=false; tables[n].order=null; });
+    $("#hRevealPanel").classList.add("hide"); $("#hLobbyPanel").classList.remove("hide");
+    $("#hTitle").textContent = "Build the Results Cake";
+    renderTables(); broadcastPhase();
+    clearInterval(tick);
+    tick = setInterval(()=>{
+      secs = Math.max(0, secs-1);
+      $("#hClock").textContent = fmt(secs);
+      $("#hClock").classList.toggle("warn", secs<=15);
+      if (secs % 3 === 0) broadcastPhase();
+      if (secs === 0){
+        clearInterval(tick);
+        broadcastPhase();
+        $("#hStatus").textContent = "Time's up — revealing…";
+        setTimeout(doReveal, 2000);   // grace so the last locks land first
+      }
+    },1000);
+  };
+  $("#hStop").onclick = () => { clearInterval(tick); broadcastPhase(); };
+  $("#hReset").onclick = () => {
+    clearInterval(tick); phase="lobby"; secs=ROUND_SECONDS;
+    $("#hClock").textContent = fmt(secs); $("#hClock").classList.remove("warn");
+    $("#hRevealPanel").classList.add("hide"); $("#hLobbyPanel").classList.remove("hide");
+    $("#hTitle").textContent = "Build the Results Cake";
+    Object.keys(tables).forEach(n=>{ tables[n].locked=false; });
+    renderTables(); broadcastPhase();
+  };
+  function doReveal(){
+    if (phase === "reveal") return;
+    clearInterval(tick); phase = "reveal"; broadcastPhase();
+    $("#hTitle").textContent = "Leadership is the base — that's you";
+
+    const rows = Object.keys(tables).filter(n=>tables[n].order).map(n=>{
+      const c = scoreOf(tables[n].order, ANSWER_KEY);
+      return {name:n, correct:c, pts:points(c, tables[n].secs||0), order:tables[n].order};
+    }).sort((a,b)=>b.pts-a.pts);
+
+    /* ---- top 10 leaderboard ---- */
+    const tb = $("#hBoard"); tb.innerHTML = "";
+    rows.slice(0,10).forEach((r,i)=>{
+      const tr = document.createElement("tr");
+      if (r.correct===6) tr.className = "perfect";
+      tr.innerHTML = '<td class="rk"></td><td class="nm"></td><td class="cr"></td><td class="sc"></td>';
+      tr.querySelector(".rk").textContent = (i+1);
+      tr.querySelector(".nm").textContent = r.name;
+      tr.querySelector(".cr").textContent = r.correct + "/6";
+      tr.querySelector(".sc").textContent = r.pts;
+      tb.appendChild(tr);
+    });
+    const perfect = rows.filter(r=>r.correct===6).length;
+    $("#hBoardNote").textContent = rows.length
+      ? rows.length + " team" + (rows.length===1?"":"s") + " locked in · " + perfect + " perfect cake" + (perfect===1?"":"s")
+      : "No teams locked in a build.";
+
+    /* ---- how the room did: score distribution ---- */
+    const dist = [0,0,0,0,0,0,0];
+    rows.forEach(r => dist[r.correct]++);
+    const maxD = Math.max(1, ...dist);
+    const db = $("#hDist"); db.innerHTML = "";
+    for (let s=6; s>=0; s--){
+      const row = document.createElement("div");
+      row.className = "distrow" + (s===6 ? " top" : "");
+      const pct = rows.length ? Math.round(dist[s]/rows.length*100) : 0;
+      row.innerHTML = '<span class="distlab"></span><span class="disttrack"><span class="distbar"></span></span><span class="distcount"></span>';
+      row.querySelector(".distlab").textContent = s + "/6";
+      const bar = row.querySelector(".distbar");
+      bar.dataset.w = Math.round(dist[s]/maxD*100) + "%";
+      row.querySelector(".distcount").textContent = dist[s] + (dist[s] ? "  ·  " + pct + "%" : "");
+      db.appendChild(row);
+    }
+    requestAnimationFrame(()=>{ db.querySelectorAll(".distbar").forEach(b=>{ b.style.width = b.dataset.w; }); });
+    const baseId = ANSWER_KEY[ANSWER_KEY.length-1];
+    const gotBase = rows.filter(r => r.order[r.order.length-1] === baseId).length;
+    $("#hDistNote").textContent = rows.length
+      ? gotBase + " of " + rows.length + " teams put " + LAYERS[baseId].name + " at the base."
+      : "";
+
+    /* ---- the answer, and what the room built ---- */
+    $("#hKeyShow").innerHTML = "";
+    Cake($("#hKeyShow"), {editable:false, order:ANSWER_KEY, h:40, fs:13, gap:5, baseLabel:"the foundation"}).enable(false);
+
+    $("#hRoomCake").innerHTML = "";
+    if (rows.length){
+      const cnt = {};
+      Object.keys(LAYERS).forEach(id => cnt[id] = [0,0,0,0,0,0]);
+      rows.forEach(r => r.order.forEach((id,i)=>{ if (cnt[id]) cnt[id][i]++; }));
+      const cells = [];
+      Object.keys(cnt).forEach(id => cnt[id].forEach((c,i)=> cells.push({id:id, i:i, c:c})));
+      cells.sort((a,b)=> b.c - a.c);
+      const roomOrder = new Array(6).fill(null), used = {};
+      cells.forEach(c => { if (roomOrder[c.i]===null && !used[c.id]){ roomOrder[c.i]=c.id; used[c.id]=true; } });
+      const rc = Cake($("#hRoomCake"), {editable:false, order:roomOrder, h:40, fs:13, gap:5, baseLabel:"most common placement"});
+      rc.enable(false); rc.mark(ANSWER_KEY);
+    }
+
+    $("#hLobbyPanel").classList.add("hide");
+    $("#hRevealPanel").classList.remove("hide");
+  }
+  $("#hReveal").onclick = doReveal;
+
+  connect(room, msg => {
+    if (msg.t === "join"){
+      if (!tables[msg.table]) tables[msg.table] = {locked:false, order:null, secs:0};
+      renderTables(); broadcastPhase();
+    }
+    if (msg.t === "submit"){
+      tables[msg.table] = {locked:true, order:msg.order, secs:msg.secs};
+      renderTables();
+    }
+    if (msg.t === "unlock"){
+      if (tables[msg.table]) tables[msg.table].locked = false;
+      renderTables();
+    }
+  }, ok => {
+    if (!ok){
+      $("#hostWarn").classList.remove("hide");
+      $("#hostWarn").textContent = "Reconnecting… if this stays up, teams can't join — use Solo / no-wifi mode (add #solo to the address).";
+    } else {
+      $("#hostWarn").classList.add("hide");
+      send({t:"ping"});
+    }
+  });
+  setInterval(()=>{ if (phase==="lobby") send({t:"ping"}); }, 5000);
+}
+
+/* =========================================================
+   SOLO / no-wifi facilitator mode — one screen, drag it live
+   ========================================================= */
+function startSolo(){
+  $("#home").classList.add("hide");
+  $("#play").classList.remove("hide");
+  $("#pTable").textContent = "Facilitator screen";
+  $("#pEyebrow").textContent = "Drag the layers into order";
+  $("#pTitle").textContent = "Build the Results Cake";
+  $("#pHelp").textContent = "Let the room call it out. Drag a layer to move it. When they've committed, hit Reveal.";
+  $("#play").style.maxWidth = "760px";
+  const cake = Cake($("#pPan"), {editable:true, h:74, fs:24});
+  cake.enable(true);
+  let secs = ROUND_SECONDS, running = false;
+  $("#pClock").textContent = fmt(secs);
+  setInterval(()=>{ if(running && secs>0){ secs--; $("#pClock").textContent=fmt(secs); $("#pClock").classList.toggle("warn",secs<=15);} },1000);
+  $("#pClock").onclick = () => { running = !running; };
+  $("#pSubmit").textContent = "Reveal the answer";
+  $("#pSubmit").onclick = () => {
+    running = false;
+    const c = scoreOf(cake.order, ANSWER_KEY);
+    cake.mark(ANSWER_KEY);
+    cake.enable(false);
+    $("#pTitle").textContent = "Leadership is the base — that's you";
+    $("#pResult").classList.remove("hide");
+    $("#pScore").textContent = c + "/6";
+    $("#pScoreNote").textContent = "Tap the clock to start/stop the timer. Refresh to run it again.";
+    setTimeout(()=>cake.set(ANSWER_KEY, true), 900);
+  };
+}
+</script>
+</body>
+</html>
