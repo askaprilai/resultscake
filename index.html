@@ -229,7 +229,7 @@
     </div>
 
     <div>
-      <div class="brandrow on-dark"><svg class="mark" viewBox="-30 -30 60 60" width="26" height="26" role="img" aria-label="Ripple Leadership"><path d="M -22 0 A 22 22 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -14 0 A 14 14 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -7 0 A 7 7 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="0" cy="0" r="2.2" fill="currentColor"/></svg><span class="wm">Ripple Leadership · Leadership summit</span></div>
+      <div class="brandrow on-dark"><svg class="mark" viewBox="-30 -30 60 60" width="26" height="26" role="img" aria-label="Ripple Leadership"><path d="M -22 0 A 22 22 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -14 0 A 14 14 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -7 0 A 7 7 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="0" cy="0" r="2.2" fill="currentColor"/></svg><span class="wm" id="hEvent">Ripple Leadership</span></div>
       <h1 id="hTitle">Build the Results Cake</h1>
       <div class="panel" id="hLobbyPanel">
         <p class="eyebrow">Teams in the room</p>
@@ -268,6 +268,8 @@
 /* =========================================================
    THE RESULTS CAKE — live build game
    Views: home | player (?r=CODE) | host (#host) | solo (#solo)
+   Facilitator screen shows a client name via ?event=  e.g.
+     /?event=Acme%20Store%20Manager%20Summit#host
    Sync: Supabase Realtime broadcast (no database writes)
    ========================================================= */
 
@@ -615,6 +617,12 @@ function startHost(){
   const joinUrl = location.origin + location.pathname + "?r=" + room;
   $("#hCode").textContent = room;
   $("#hUrl").textContent = joinUrl.replace(/^https?:\/\//,"");
+
+  /* Client/event name comes from ?event= so one link serves every booking.
+     textContent, not innerHTML — the value is never parsed as markup.
+     The join URL above deliberately omits it: players get a clean link. */
+  const eventName = (params.get("event") || "").trim().replace(/\s+/g," ").slice(0,60);
+  $("#hEvent").textContent = eventName ? "Ripple Leadership · " + eventName : "Ripple Leadership";
   try { new QRCode($("#qr"), {text:joinUrl, width:190, height:190, correctLevel:QRCode.CorrectLevel.M}); } catch(e){}
 
   const tables = {};       // name -> {order, secs, locked}
