@@ -123,17 +123,27 @@
   .board .sc{text-align:right;font-weight:900;color:var(--gold);font-size:26px;width:70px}
   .board tr.perfect .sc{color:#fff;background:var(--emerald);border-radius:8px}
   .mt{font-weight:800;font-size:14px;margin-bottom:8px;color:#B5D4F4;text-transform:uppercase;letter-spacing:.12em}
-  .revealgrid{display:grid;grid-template-columns:1.05fr .85fr 290px;gap:30px;align-items:start}
+  .revealgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px 30px;align-items:start}
   @media (max-width:1200px){ .revealgrid{grid-template-columns:1fr} }
+  /* The answer and the room's build sit side by side so the eye compares them
+     in one glance, on their own full-width row — squeezing them into a third
+     column starved the distribution bars. Headings and pans are siblings in
+     one 2-col grid, so both cakes start on the same line even if a heading
+     wraps. justify-content:start keeps them adjacent instead of drifting
+     apart on a wide projector. */
+  .cakepair{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,400px));
+    gap:0 26px;align-items:start;justify-content:start}
+  .cakepair .pan{max-width:none}
+  @media (max-width:900px){ .cakepair{grid-template-columns:minmax(0,1fr);gap:20px 0} }
   /* score distribution */
-  .distrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .distrow{display:flex;align-items:center;gap:10px;margin-bottom:7px}
   .distlab{width:52px;font-weight:900;font-size:21px;color:var(--blue-l);flex:none}
   .disttrack{display:block;flex:1;background:rgba(255,255,255,.10);border-radius:7px;height:30px;overflow:hidden}
   .distbar{display:block;height:100%;width:0;background:var(--blue-l);border-radius:7px;transition:width .6s ease}
   .distrow.top .distbar{background:var(--emerald)}
   .distrow.top .distlab{color:var(--emerald-l)}
   .distcount{width:104px;flex:none;font-weight:800;font-size:19px;color:#fff}
-  .distnote{font-size:17px;color:#B5D4F4;margin-top:16px;line-height:1.45;font-weight:700}
+  .distnote{font-size:17px;color:#B5D4F4;margin-top:12px;line-height:1.45;font-weight:700}
   .statusline{font-size:13px;color:#B5D4F4;margin-top:10px}
   .warnbar{background:var(--gold);color:#042C53;font-weight:800;padding:10px 16px;font-size:14px;text-align:center}
   .hostbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
@@ -153,9 +163,9 @@
     <div class="brandrow on-light"><svg class="mark" viewBox="-30 -30 60 60" width="30" height="30" role="img" aria-label="Ripple Leadership"><path d="M -22 0 A 22 22 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -14 0 A 14 14 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -7 0 A 7 7 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="0" cy="0" r="2.2" fill="currentColor"/></svg><span class="wm">Ripple Leadership</span></div>
     <p class="eyebrow">Positive Leaders Cultivate Positive Results</p>
     <h1>The Results Cake</h1>
-    <p class="muted">Build the cake. Six layers, one right order. Leadership is somewhere in there — your team has to decide where.</p>
+    <p class="muted">Build the cake. Six layers, one right order. Leadership is somewhere in there — you decide where.</p>
     <div class="stack-hr"></div>
-    <h2>Joining a team?</h2>
+    <h2>Joining in?</h2>
     <input class="code-in" id="joinCode" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters">
     <button class="btn" id="joinBtn" style="width:100%">Join the game</button>
     <div class="stack-hr"></div>
@@ -170,17 +180,17 @@
 <div id="gate" class="hide" style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(160deg,#042C53 0%,#0F4C81 55%,#185FA5 100%)">
   <div class="card">
     <p class="eyebrow">The Results Cake</p>
-    <h1>Name your team</h1>
-    <p class="muted">This is what shows on the big screen. Store name, crew name, whatever you want to be called.</p>
-    <input class="code-in" id="gateName" maxlength="22" placeholder="Your team name" style="letter-spacing:.02em;font-size:22px;text-transform:none" autocomplete="off">
-    <button class="btn" id="gateGo" style="width:100%">We're in</button>
+    <h1>Team or your name</h1>
+    <p class="muted">This is what shows on the big screen. Playing on your own? Just put your name in. Otherwise store name, crew name, whatever you want to be called.</p>
+    <input class="code-in" id="gateName" maxlength="22" placeholder="Team or your name" style="letter-spacing:.02em;font-size:22px;text-transform:none" autocomplete="off">
+    <button class="btn" id="gateGo" style="width:100%">Let's go</button>
   </div>
 </div>
 
 <!-- ================= PLAYER ================= -->
 <div id="play" class="hide">
   <div class="topbar">
-    <span class="pill" id="pTable">Team</span>
+    <span class="pill" id="pTable">You</span>
     <span class="clock" id="pClock">—</span>
   </div>
   <p class="eyebrow" id="pEyebrow">Drag the layers into order</p>
@@ -188,7 +198,7 @@
   <p class="muted" id="pHelp">Top of the screen is the top of the cake. Drag a layer to move it. Bottom is the foundation.</p>
   <div id="pPan" class="pan" style="margin-top:18px"></div>
   <div id="pResult" class="hide" style="margin-top:22px;text-align:center">
-    <p class="eyebrow">Your team scored</p>
+    <p class="eyebrow">You scored</p>
     <div class="scorebig" id="pScore">0</div>
     <p class="muted" id="pScoreNote"></p>
   </div>
@@ -203,7 +213,7 @@
   <div class="hostgrid">
     <div>
       <div class="panel">
-        <p class="eyebrow">Teams join at</p>
+        <p class="eyebrow">Join at</p>
         <div class="joinurl" id="hUrl"></div>
         <div class="joincode" id="hCode">----</div>
         <div id="qr"></div>
@@ -217,7 +227,7 @@
           <button class="btn gold sm" id="hReveal">Reveal answer</button>
           <button class="btn ghost sm" style="color:#fff;border-color:#fff" id="hReset">New round</button>
         </div>
-        <div class="statusline" id="hStatus">Waiting for teams…</div>
+        <div class="statusline" id="hStatus">Waiting for players…</div>
         <div class="keyedit">
           <button class="btn ghost sm" style="color:#fff;border-color:rgba(255,255,255,.5)" id="hKeyToggle">Edit the answer key</button>
           <div id="hKeyWrap" class="hide" style="margin-top:12px">
@@ -232,18 +242,18 @@
       <div class="brandrow on-dark"><svg class="mark" viewBox="-30 -30 60 60" width="26" height="26" role="img" aria-label="Ripple Leadership"><path d="M -22 0 A 22 22 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -14 0 A 14 14 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M -7 0 A 7 7 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="0" cy="0" r="2.2" fill="currentColor"/></svg><span class="wm" id="hEvent">Ripple Leadership</span></div>
       <h1 id="hTitle">Build the Results Cake</h1>
       <div class="panel" id="hLobbyPanel">
-        <p class="eyebrow">Teams in the room</p>
+        <p class="eyebrow">In the room</p>
         <div class="joinstat">
           <span class="bignum" id="hCount">0</span>
-          <span class="ofnum">teams in · <span id="hLocked">0</span> locked in</span>
+          <span class="ofnum">in the room · <span id="hLocked">0</span> locked in</span>
         </div>
-        <div class="tables" id="hTables"><span class="statusline">No teams yet — scan the code.</span></div>
+        <div class="tables" id="hTables"><span class="statusline">Nobody yet — scan the code.</span></div>
       </div>
       <div class="panel hide" id="hRevealPanel" style="margin-top:16px">
         <p class="eyebrow">The answer — leadership is the base</p>
         <div class="revealgrid">
           <div>
-            <div class="mt">Top 10 teams</div>
+            <div class="mt">Top 10</div>
             <table class="board"><tbody id="hBoard"></tbody></table>
             <div class="distnote" id="hBoardNote"></div>
           </div>
@@ -252,10 +262,10 @@
             <div id="hDist"></div>
             <div class="distnote" id="hDistNote"></div>
           </div>
-          <div>
+          <div class="cakepair">
             <div class="mt">The Results Cake</div>
+            <div class="mt">What the room built</div>
             <div id="hKeyShow" class="pan"></div>
-            <div class="mt" style="margin-top:18px">What the room built</div>
             <div id="hRoomCake" class="pan"></div>
           </div>
         </div>
@@ -448,7 +458,7 @@ function startPlayer(room){
   if (!saved){
     $("#gate").classList.remove("hide");
     const go = () => {
-      const v = ($("#gateName").value || "").trim().slice(0,22) || ("Team " + Math.floor(Math.random()*90+10));
+      const v = ($("#gateName").value || "").trim().slice(0,22) || ("Player " + Math.floor(Math.random()*90+10));
       localStorage.setItem("cakeTeam_"+room, v);
       $("#gate").classList.add("hide");
       runPlayer(room, v);
@@ -475,7 +485,7 @@ function runPlayer(room, tableName){
     if (p === "lobby"){
       $("#pEyebrow").textContent = "Waiting for the facilitator";
       $("#pTitle").textContent = "Get ready";
-      $("#pHelp").textContent = "You'll have 90 seconds to stack the six layers in the right order. Leadership goes somewhere — your team decides where.";
+      $("#pHelp").textContent = "You'll have 90 seconds to stack the six layers in the right order. Leadership goes somewhere — you decide where.";
       $("#pSubmit").textContent = "Waiting…"; $("#pSubmit").disabled = true;
       cake.enable(false); cake.mark(null);
       $("#pResult").classList.add("hide");
@@ -640,8 +650,8 @@ function startHost(){
     $("#hCount").textContent = names.length;
     $("#hLocked").textContent = locked;
     if (!names.length){
-      box.innerHTML = '<span class="statusline">No teams yet — scan the code.</span>';
-      $("#hStatus").textContent = "Waiting for teams…";
+      box.innerHTML = '<span class="statusline">Nobody yet — scan the code.</span>';
+      $("#hStatus").textContent = "Waiting for players…";
       return;
     }
     box.innerHTML = "";
@@ -651,7 +661,7 @@ function startHost(){
       d.textContent = n + (tables[n].locked ? " ✓" : "");
       box.appendChild(d);
     });
-    $("#hStatus").textContent = names.length + " team" + (names.length===1?"":"s") + " in · " + locked + " locked in";
+    $("#hStatus").textContent = names.length + " in the room · " + locked + " locked in";
   }
 
   function broadcastPhase(){ send({t:"phase", phase:phase, secs:secs, key:ANSWER_KEY, round:roundId}); }
@@ -709,8 +719,8 @@ function startHost(){
     });
     const perfect = rows.filter(r=>r.correct===6).length;
     $("#hBoardNote").textContent = rows.length
-      ? rows.length + " team" + (rows.length===1?"":"s") + " locked in · " + perfect + " perfect cake" + (perfect===1?"":"s")
-      : "No teams locked in a build.";
+      ? rows.length + " locked in · " + perfect + " perfect cake" + (perfect===1?"":"s")
+      : "Nobody locked in a build.";
 
     /* ---- how the room did: score distribution ---- */
     const dist = [0,0,0,0,0,0,0];
@@ -732,12 +742,12 @@ function startHost(){
     const baseId = ANSWER_KEY[ANSWER_KEY.length-1];
     const gotBase = rows.filter(r => r.order[r.order.length-1] === baseId).length;
     $("#hDistNote").textContent = rows.length
-      ? gotBase + " of " + rows.length + " teams put " + LAYERS[baseId].name + " at the base."
+      ? gotBase + " of " + rows.length + " put " + LAYERS[baseId].name + " at the base."
       : "";
 
     /* ---- the answer, and what the room built ---- */
     $("#hKeyShow").innerHTML = "";
-    Cake($("#hKeyShow"), {editable:false, order:ANSWER_KEY, h:40, fs:13, gap:5, baseLabel:"the foundation"}).enable(false);
+    Cake($("#hKeyShow"), {editable:false, order:ANSWER_KEY, h:40, fs:15, gap:5, baseLabel:"the foundation"}).enable(false);
 
     $("#hRoomCake").innerHTML = "";
     if (rows.length){
@@ -749,7 +759,7 @@ function startHost(){
       cells.sort((a,b)=> b.c - a.c);
       const roomOrder = new Array(6).fill(null), used = {};
       cells.forEach(c => { if (roomOrder[c.i]===null && !used[c.id]){ roomOrder[c.i]=c.id; used[c.id]=true; } });
-      const rc = Cake($("#hRoomCake"), {editable:false, order:roomOrder, h:40, fs:13, gap:5, baseLabel:"most common placement"});
+      const rc = Cake($("#hRoomCake"), {editable:false, order:roomOrder, h:40, fs:15, gap:5, baseLabel:"most common placement"});
       rc.enable(false); rc.mark(ANSWER_KEY);
     }
 
@@ -774,7 +784,7 @@ function startHost(){
   }, ok => {
     if (!ok){
       $("#hostWarn").classList.remove("hide");
-      $("#hostWarn").textContent = "Reconnecting… if this stays up, teams can't join — use Solo / no-wifi mode (add #solo to the address).";
+      $("#hostWarn").textContent = "Reconnecting… if this stays up, nobody can join — use Solo / no-wifi mode (add #solo to the address).";
     } else {
       $("#hostWarn").classList.add("hide");
       send({t:"ping"});
