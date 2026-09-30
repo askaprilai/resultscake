@@ -265,7 +265,7 @@
           <button class="btn ghost sm" style="color:#fff;border-color:#fff" id="hReset">New round</button>
         </div>
         <div class="statusline" id="hStatus">Waiting for players…</div>
-        <div class="keyedit">
+        <div class="keyedit" id="hKeyEdit">
           <button class="btn ghost sm" style="color:#fff;border-color:rgba(255,255,255,.5)" id="hKeyToggle">Edit the answer key</button>
           <div id="hKeyWrap" class="hide" style="margin-top:12px">
             <p class="statusline">Drag to set the correct cake (top → bottom).</p>
@@ -713,6 +713,20 @@ function startHost(){
   keyCake.enable(true);
   $("#hKeyToggle").onclick = () => $("#hKeyWrap").classList.toggle("hide");
 
+  /* Only show the controls that phase can actually use. Editing the answer
+     key is setup, not something you reach for mid-round, and it was eating
+     the panel the whole session. New round sat next to Stop clock during
+     play, one slip from wiping a live round. */
+  function setControls(p){
+    const show = (el, on) => $(el).classList.toggle("hide", !on);
+    show("#hStart",  p !== "reveal");          // start, or restart the clock
+    show("#hStop",   p === "playing");
+    show("#hReveal", p === "playing");
+    show("#hReset",  p === "reveal");
+    show("#hKeyEdit", p === "lobby");          // setup only
+    if (p !== "lobby") $("#hKeyWrap").classList.add("hide");   // collapse if left open
+  }
+
   function renderTables(){
     const names = Object.keys(tables).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"}));
     const box = $("#hTables");
@@ -738,6 +752,7 @@ function startHost(){
 
   $("#hStart").onclick = () => {
     phase = "playing"; secs = ROUND_SECONDS; roundId++;
+    setControls(phase);
     Object.keys(tables).forEach(n=>{ tables[n].locked=false; tables[n].order=null; });
     $("#hRevealPanel").classList.add("hide"); $("#hLobbyPanel").classList.remove("hide");
     $("#hTitle").textContent = "Build the Results Cake";
@@ -759,6 +774,7 @@ function startHost(){
   $("#hStop").onclick = () => { clearInterval(tick); broadcastPhase(); };
   $("#hReset").onclick = () => {
     clearInterval(tick); phase="lobby"; secs=ROUND_SECONDS;
+    setControls(phase);
     $("#hClock").textContent = fmt(secs); $("#hClock").classList.remove("warn");
     $("#hRevealPanel").classList.add("hide"); $("#hLobbyPanel").classList.remove("hide");
     $("#hTitle").textContent = "Build the Results Cake";
@@ -767,7 +783,7 @@ function startHost(){
   };
   function doReveal(){
     if (phase === "reveal") return;
-    clearInterval(tick); phase = "reveal"; broadcastPhase();
+    clearInterval(tick); phase = "reveal"; setControls(phase); broadcastPhase();
     $("#hTitle").textContent = "Leadership is the base — that's you";
 
     const rows = Object.keys(tables).filter(n=>tables[n].order).map(n=>{
@@ -859,6 +875,7 @@ function startHost(){
       send({t:"ping"});
     }
   });
+  setControls(phase);
   setInterval(()=>{ if (phase==="lobby") send({t:"ping"}); }, 5000);
 }
 
