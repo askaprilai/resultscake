@@ -67,11 +67,12 @@
   /* ---------- CAKE WIDGET ---------- */
   .pan{position:relative;margin:0 auto;width:100%;max-width:420px;touch-action:none;user-select:none}
   .layer{
-    position:absolute;left:0;right:0;top:0;border-radius:12px;
+    position:absolute;left:0;top:0;width:100%;border-radius:12px;
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     padding:0 14px 0 16px;color:#fff;font-weight:800;font-size:18px;letter-spacing:.01em;
     box-shadow:0 3px 0 rgba(0,0,0,.14), 0 6px 14px rgba(4,44,83,.14);
-    transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .15s;
+    transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .15s,
+               width .2s cubic-bezier(.2,.8,.3,1), margin-left .2s cubic-bezier(.2,.8,.3,1);
     will-change:transform;
   }
   .layer .grip{opacity:.75;font-size:20px;letter-spacing:-2px}
@@ -84,6 +85,27 @@
     letter-spacing:.18em;text-transform:uppercase;color:var(--grey);
   }
   .layer .mark{font-size:20px;font-weight:900}
+  /* The stack tapers toward the top so it reads as a cake, not a list — and
+     the widest layer is the base, which is the point we're teaching. */
+  .plate{position:absolute;left:-5%;width:110%;height:11px;border-radius:999px;
+    background:#CFC8B5;box-shadow:0 3px 8px rgba(4,44,83,.22)}
+  #host .plate{background:rgba(255,255,255,.38);box-shadow:none}
+  .cherry{position:absolute;left:50%;top:-9px;width:14px;height:14px;border-radius:50%;
+    background:#A32F26;transform:translateX(-50%);box-shadow:0 2px 0 rgba(0,0,0,.2)}
+  .cherry::after{content:"";position:absolute;left:50%;top:-5px;width:2px;height:6px;
+    border-radius:1px;background:#085041;transform:translateX(-50%) rotate(12deg)}
+
+  /* ---------- READY CARD ---------- */
+  #pReady{text-align:center;padding:10px 0 4px}
+  #pReady svg{display:block;margin:0 auto;width:210px;height:auto;max-width:70%}
+  #pReady .rh{font-size:27px;font-weight:800;color:var(--navy);margin:14px 0 6px;letter-spacing:-.01em}
+  #pReady .rs{font-size:15px;color:var(--grey);line-height:1.5;max-width:320px;margin:0 auto}
+  #pReady .rw{margin-top:18px;font-size:12px;font-weight:800;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--blue)}
+  #pReady .rw i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--emerald);
+    margin-left:3px;animation:bob 1.2s infinite}
+  #pReady .rw i:nth-child(2){animation-delay:.15s} #pReady .rw i:nth-child(3){animation-delay:.3s}
+  @keyframes bob{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
 
   /* ---------- PLAYER ---------- */
   #play{padding:16px 16px 130px;max-width:520px;margin:0 auto}
@@ -196,12 +218,28 @@
   <p class="eyebrow" id="pEyebrow">Drag the layers into order</p>
   <h1 id="pTitle">Build your Results Cake</h1>
   <p class="muted" id="pHelp">Top of the screen is the top of the cake. Drag a layer to move it. Bottom is the foundation.</p>
-  <div id="pPan" class="pan" style="margin-top:18px"></div>
-  <div id="pResult" class="hide" style="margin-top:22px;text-align:center">
+  <div id="pReady" class="hide">
+      <svg viewBox="0 0 200 152" role="img" aria-label="A six layer cake">
+        <ellipse cx="100" cy="134" rx="90" ry="8" fill="#D8D3C4"/>
+        <rect x="20" y="112" width="160" height="17" rx="4" fill="#042C53"/>
+        <rect x="26" y="94"  width="148" height="17" rx="4" fill="#185FA5"/>
+        <rect x="32" y="76"  width="136" height="17" rx="4" fill="#085041"/>
+        <rect x="38" y="58"  width="124" height="17" rx="4" fill="#1D9E75"/>
+        <rect x="44" y="40"  width="112" height="17" rx="4" fill="#9FE1CB"/>
+        <rect x="50" y="22"  width="100" height="17" rx="4" fill="#FFC857"/>
+        <path d="M100 16 q3 -5 7 -6" stroke="#085041" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="100" cy="16" r="7" fill="#A32F26"/>
+      </svg>
+    <p class="rh">Ready, set, bake</p>
+    <p class="rs">Six layers. One right order. You get 90 seconds the moment the room starts.</p>
+    <p class="rw">Waiting for the room<i></i><i></i><i></i></p>
+  </div>
+  <div id="pResult" class="hide" style="margin:6px 0 20px;text-align:center">
     <p class="eyebrow">You scored</p>
     <div class="scorebig" id="pScore">0</div>
     <p class="muted" id="pScoreNote"></p>
   </div>
+  <div id="pPan" class="pan" style="margin-top:22px"></div>
   <div class="footbar">
     <button class="btn" id="pSubmit">Lock it in</button>
   </div>
@@ -316,11 +354,29 @@ function Cake(el, opts){
   let enabled = !!opts.editable;
   const nodes = {};
 
-  el.style.height = (order.length*(H+G) - G + 22) + "px";
+  /* Taper: the base is full width and each layer above steps in, so the stack
+     reads as a cake. The widest layer being the foundation is the lesson. */
+  const STEP = opts.taper === false ? 0 : (opts.taper == null ? 5 : opts.taper);
+  const widthPct = i => 100 - (order.length - 1 - i) * STEP;
+  const dress = opts.dress !== false;            // plate + cherry
+  const stackH = order.length*(H+G) - G;
+
+  el.style.height = (stackH + (dress ? 34 : 22)) + "px";
+
+  if (dress){
+    const plate = document.createElement("div");
+    plate.className = "plate";
+    plate.style.top = (stackH + 4) + "px";
+    el.appendChild(plate);
+    const cherry = document.createElement("div");
+    cherry.className = "cherry";
+    el.appendChild(cherry);
+  }
+
   const tag = document.createElement("div");
   tag.className = "basetag";
   tag.textContent = opts.baseLabel || "the foundation";
-  tag.style.top = (order.length*(H+G) - G + 6) + "px";
+  tag.style.top = (stackH + (dress ? 19 : 6)) + "px";
   el.appendChild(tag);
 
   order.forEach(id => {
@@ -339,11 +395,17 @@ function Cake(el, opts){
     attachDrag(d, id);
   });
 
+  function tier(n, i){
+    const w = widthPct(i);
+    n.style.width = w + "%";
+    n.style.marginLeft = ((100 - w) / 2) + "%";
+  }
   function place(anim){
     order.forEach((id,i)=>{
       const n = nodes[id];
       if (!anim) n.style.transition = "none";
       n.style.transform = "translateY("+ (i*(H+G)) +"px)";
+      tier(n, i);
       if (!anim) requestAnimationFrame(()=>{ n.style.transition = ""; });
     });
   }
@@ -370,7 +432,7 @@ function Cake(el, opts){
         order.splice(order.indexOf(id),1);
         order.splice(ni,0,id);
         cur = ni;
-        order.forEach((oid,i)=>{ if(oid!==id) nodes[oid].style.transform = "translateY("+(i*(H+G))+"px)"; });
+        order.forEach((oid,i)=>{ if(oid!==id){ nodes[oid].style.transform = "translateY("+(i*(H+G))+"px)"; tier(nodes[oid], i); } });
       }
       e.preventDefault();
     });
@@ -480,17 +542,26 @@ function runPlayer(room, tableName){
   const cake = Cake($("#pPan"), {editable:false, onChange:()=>{}});
   cake.enable(false);
 
+  function showReady(on){
+    $("#pReady").classList.toggle("hide", !on);
+    $("#pPan").classList.toggle("hide", on);
+    $("#pTitle").classList.toggle("hide", on);   // the card carries the headline
+    $("#pHelp").classList.toggle("hide", on);
+  }
+
   function setPhase(p){
     phase = p;
     if (p === "lobby"){
+      /* The cake is undraggable until the round starts, so showing it here is
+         dead weight. Show the bake card instead — it gives the wait a job. */
+      showReady(true);
       $("#pEyebrow").textContent = "Waiting for the facilitator";
-      $("#pTitle").textContent = "Get ready";
-      $("#pHelp").textContent = "You'll have 90 seconds to stack the six layers in the right order. Leadership goes somewhere — you decide where.";
       $("#pSubmit").textContent = "Waiting…"; $("#pSubmit").disabled = true;
       cake.enable(false); cake.mark(null);
       $("#pResult").classList.add("hide");
     }
     if (p === "playing"){
+      showReady(false);
       $("#pTitle").textContent = "Build your Results Cake";
       $("#pSubmit").disabled = false;
       cake.mark(null);
@@ -498,6 +569,7 @@ function runPlayer(room, tableName){
       $("#pResult").classList.add("hide");
     }
     if (p === "reveal"){
+      showReady(false);
       $("#pEyebrow").textContent = "The answer";
       $("#pTitle").textContent = "Leadership is the base";
       $("#pHelp").textContent = "That's you. Everything above it sits on how you show up.";
@@ -556,6 +628,7 @@ function runPlayer(room, tableName){
   let offlineMode = false, offlineTimer = null;
   function goOffline(){
     offlineMode = true;
+    showReady(false);   // no facilitator is coming — give them the cake
     $("#pEyebrow").textContent = "Offline — practice build";
     $("#pTitle").textContent = "Build your Results Cake";
     $("#pHelp").textContent = "Can't reach the room — check the wifi. Keep building; this reconnects on its own.";
