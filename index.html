@@ -263,6 +263,7 @@
           <button class="btn ghost sm" style="color:#fff;border-color:#fff" id="hStop">Stop clock</button>
           <button class="btn gold sm" id="hReveal">Reveal answer</button>
           <button class="btn ghost sm" style="color:#fff;border-color:#fff" id="hReset">New round</button>
+          <button class="btn ghost sm" style="color:#fff;border-color:rgba(255,255,255,.5)" id="hClear">Clear the room</button>
         </div>
         <div class="statusline" id="hStatus">Waiting for players…</div>
         <div class="keyedit" id="hKeyEdit">
@@ -724,6 +725,7 @@ function startHost(){
     show("#hReveal", p === "playing");
     show("#hReset",  p === "reveal");
     show("#hKeyEdit", p === "lobby");          // setup only
+    show("#hClear",  p === "lobby");           // ghosts only get cleared between rounds
     if (p !== "lobby") $("#hKeyWrap").classList.add("hide");   // collapse if left open
   }
 
@@ -772,6 +774,17 @@ function startHost(){
     },1000);
   };
   $("#hStop").onclick = () => { clearInterval(tick); broadcastPhase(); };
+
+  /* Nobody is ever removed from the room otherwise — there's no leave event,
+     so a closed phone or a test join sticks for the session. Emptying the
+     list is safe because the lobby ping makes everyone still connected
+     re-announce: ghosts stay gone, real players never touch their phones. */
+  $("#hClear").onclick = () => {
+    Object.keys(tables).forEach(n => delete tables[n]);
+    renderTables();
+    send({t:"ping"});
+    $("#hStatus").textContent = "Cleared — anyone still here will reappear…";
+  };
   $("#hReset").onclick = () => {
     clearInterval(tick); phase="lobby"; secs=ROUND_SECONDS;
     setControls(phase);
