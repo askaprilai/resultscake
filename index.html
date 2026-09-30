@@ -116,7 +116,7 @@
   .footbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #E7E4DA;
     padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;justify-content:center}
   .footbar .btn{flex:1;max-width:420px}
-  .scorebig{font-size:56px;font-weight:900;color:var(--navy);line-height:1}
+  .scorebig{font-size:48px;font-weight:900;color:var(--navy);line-height:1.05;white-space:nowrap}
 
   /* ---------- HOST ---------- */
   #host{min-height:100%;background:var(--navy);color:#fff;padding:22px 26px 26px}
@@ -141,8 +141,7 @@
   .board{width:100%;border-collapse:collapse;font-size:22px;font-weight:700}
   .board td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.15)}
   .board .rk{width:50px;font-weight:900;color:var(--blue-l);font-size:24px}
-  .board .cr{width:70px;color:#B5D4F4;font-size:18px;font-weight:700}
-  .board .sc{text-align:right;font-weight:900;color:var(--gold);font-size:26px;width:70px}
+  .board .sc{text-align:right;font-weight:900;color:var(--gold);font-size:24px;width:118px;white-space:nowrap}
   .board tr.perfect .sc{color:#fff;background:var(--emerald);border-radius:8px}
   .mt{font-weight:800;font-size:14px;margin-bottom:8px;color:#B5D4F4;text-transform:uppercase;letter-spacing:.12em}
   .revealgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px 30px;align-items:start}
@@ -235,7 +234,7 @@
     <p class="rw">Waiting for the room<i></i><i></i><i></i></p>
   </div>
   <div id="pResult" class="hide" style="margin:6px 0 20px;text-align:center">
-    <p class="eyebrow">You scored</p>
+    <p class="eyebrow">You got</p>
     <div class="scorebig" id="pScore">0</div>
     <p class="muted" id="pScoreNote"></p>
   </div>
@@ -468,11 +467,9 @@ function scoreOf(order, key){
   order.forEach((id,i)=>{ if(key[i]===id) correct++; });
   return correct;
 }
-function points(correct, secsLeft){
-  let p = correct*10;
-  if (correct === 6) p += Math.round(Math.max(0,secsLeft)/3); // speed bonus only on a perfect cake
-  return p;
-}
+/* No points. "5 of 6" is the score — it explains itself from the front of a
+   room, where "83" did not. Ties break on who locked in first (more seconds
+   left = faster), which decides the order without needing to be displayed. */
 
 /* =========================================================
    Realtime
@@ -580,8 +577,8 @@ function runPlayer(room, tableName){
       const c = scoreOf(cake.order, key);
       cake.mark(key);
       $("#pResult").classList.remove("hide");
-      $("#pScore").textContent = points(c, secs);
-      $("#pScoreNote").textContent = c + " of 6 layers in the right place" + (c===6 ? " — perfect cake." : ".");
+      $("#pScore").textContent = c + " of 6";
+      $("#pScoreNote").textContent = c===6 ? "Perfect cake." : "layers in the right place";
     }
   }
 
@@ -775,19 +772,18 @@ function startHost(){
 
     const rows = Object.keys(tables).filter(n=>tables[n].order).map(n=>{
       const c = scoreOf(tables[n].order, ANSWER_KEY);
-      return {name:n, correct:c, pts:points(c, tables[n].secs||0), order:tables[n].order};
-    }).sort((a,b)=>b.pts-a.pts);
+      return {name:n, correct:c, secs:tables[n].secs||0, order:tables[n].order};
+    }).sort((a,b)=> b.correct - a.correct || b.secs - a.secs);
 
     /* ---- top 10 leaderboard ---- */
     const tb = $("#hBoard"); tb.innerHTML = "";
     rows.slice(0,10).forEach((r,i)=>{
       const tr = document.createElement("tr");
       if (r.correct===6) tr.className = "perfect";
-      tr.innerHTML = '<td class="rk"></td><td class="nm"></td><td class="cr"></td><td class="sc"></td>';
+      tr.innerHTML = '<td class="rk"></td><td class="nm"></td><td class="sc"></td>';
       tr.querySelector(".rk").textContent = (i+1);
       tr.querySelector(".nm").textContent = r.name;
-      tr.querySelector(".cr").textContent = r.correct + "/6";
-      tr.querySelector(".sc").textContent = r.pts;
+      tr.querySelector(".sc").textContent = r.correct + " of 6";
       tb.appendChild(tr);
     });
     const perfect = rows.filter(r=>r.correct===6).length;
